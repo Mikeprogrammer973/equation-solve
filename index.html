@@ -645,7 +645,7 @@
                             hoursBadge.textContent = `${hours}h`;
 
                             hoursBadge.addEventListener('click', function () {
-                                scheduleData[dateStr][personIndex] = null
+                                addTimeSlot(dateStr, personIndex, true);
                             })
                             
                             dayCell.appendChild(timeInputDiv);
@@ -879,10 +879,12 @@
         }
         
         // Ajouter un créneau horaire
-        function addTimeSlot(dateStr, personIndex) {
+        function addTimeSlot(dateStr, personIndex, freeing = false) {
             if (!scheduleData[dateStr]) {
                 scheduleData[dateStr] = [];
             }
+
+            if(freeing) scheduleData[dateStr][personIndex] = null
             
             scheduleData[dateStr][personIndex] = {
                 startHour: '9',
