@@ -1,0 +1,1380 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Horaire Mensuel</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3b82f6',
+                        secondary: '#1e40af',
+                        accent: '#f59e0b',
+                        light: '#f8fafc',
+                        dark: '#1e293b',
+                        holiday: '#ef4444'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .time-input select {
+            appearance: none;
+            width: 60px;
+            text-align: center!important;
+            padding-right: 2.5rem;
+        }
+        
+        .time-input:focus-within {
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+        
+        .elegant-shadow {
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        
+        .table-header {
+            background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+        }
+        
+        .weekend {
+            background-color: rgba(59, 130, 246, 0.05);
+        }
+        
+        .holiday-cell {
+            background-color: rgba(239, 68, 68, 0.1) !important;
+            position: relative;
+        }
+        
+        .holiday-badge {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            background-color: #ef4444;
+            color: white;
+            font-size: 9px;
+            padding: 1px 4px;
+            border-radius: 3px;
+        }
+        
+        .ferie-tag {
+            background-color: #ef4444;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 11px;
+            display: inline-block;
+            margin-top: 3px;
+        }
+        
+        .week-container {
+            page-break-inside: avoid;
+        }
+        
+        .week-separator {
+            border-bottom: 2px solid #3b82f6;
+            margin: 20px 0;
+        }
+        
+        .week-title {
+            background-color: #3b82f6;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px 8px 0 0;
+            font-weight: bold;
+        }
+        
+        .compact-select {
+            padding: 4px 8px;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+    <div class="container mx-auto px-4 py-8 max-w-7xl">
+        <header class="mb-10">
+            <h1 class="text-4xl font-bold text-dark mb-2 text-center">Horaire Mensuel Élégant 2026</h1>
+            <div class="flex flex-wrap justify-between items-center bg-white p-6 rounded-xl elegant-shadow">
+                <div class="mb-4 md:mb-0">
+                    <h2 class="text-xl font-semibold text-dark mb-2">Gestion des Horaires Mensuels</h2>
+                </div>
+                
+                <div class="flex flex-wrap gap-4">
+                    <button id="addMonthBtn" class="px-5 py-2.5 bg-primary hover:bg-secondary text-white font-medium rounded-lg transition duration-300 flex items-center">
+                        <i class="fas fa-calendar-plus mr-2"></i> Nouveau Mois
+                    </button>
+                    <button id="manageHolidaysBtn" class="px-5 py-2.5 bg-holiday hover:bg-red-700 text-white font-medium rounded-lg transition duration-300 flex items-center">
+                        <i class="fas fa-calendar-day mr-2"></i> Jours Fériés
+                    </button>
+                    <button id="exportPdfBtn" class="px-5 py-2.5 bg-accent hover:bg-yellow-600 text-white font-medium rounded-lg transition duration-300 flex items-center">
+                        <i class="fas fa-file-pdf mr-2"></i> Exporter PDF
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <main>
+            <div class="bg-white rounded-xl elegant-shadow overflow-hidden mb-8">
+                <div class="p-6 border-b border-gray-200">
+                    <div class="flex flex-wrap justify-between items-center">
+                        <div>
+                            <h3 class="text-2xl font-bold text-dark">Horaire du Mois: <span id="currentMonthYear"></span></h3>
+                            <div class="flex flex-wrap items-center mt-2 gap-4">
+                                <div>
+                                    <label for="monthSelect" class="block text-sm font-medium text-gray-700 mb-1">Mois</label>
+                                    <select id="monthSelect" class="bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-primary focus:border-primary block w-40 p-2.5">
+                                        <option value="0">Janvier</option>
+                                        <option value="1">Février</option>
+                                        <option value="2">Mars</option>
+                                        <option value="3">Avril</option>
+                                        <option value="4">Mai</option>
+                                        <option value="5" selected>Juin</option>
+                                        <option value="6">Juillet</option>
+                                        <option value="7">Août</option>
+                                        <option value="8">Septembre</option>
+                                        <option value="9">Octobre</option>
+                                        <option value="10">Novembre</option>
+                                        <option value="11">Décembre</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label for="yearSelect" class="block text-sm font-medium text-gray-700 mb-1">Année</label>
+                                    <select id="yearSelect" class="bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-primary focus:border-primary block w-32 p-2.5">
+                                        <option value="2026" selected>2026</option>
+                                        <option value="2025">2025</option>
+                                        <option value="2024">2024</option>
+                                    </select>
+                                </div>
+                                <div class="mt-4 md:mt-0">
+                                    <div class="flex items-center">
+                                        <div class="w-4 h-4 bg-holiday rounded mr-2"></div>
+                                        <span class="text-sm text-gray-600">Jour férié (STATS)</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4 md:mt-0">
+                            <div class="text-right">
+                                <p class="text-sm text-gray-600">Total d'heures du mois:</p>
+                                <p id="monthTotal" class="text-3xl font-bold text-primary">0h</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="p-4">
+                    <div id="weeklySchedulesContainer">
+                        <!-- Les semaines seront générées dynamiquement -->
+                    </div>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
+                <div class="bg-white p-6 rounded-xl elegant-shadow">
+                    <h3 class="text-xl font-bold text-dark mb-4 flex items-center">
+                        <i class="fas fa-info-circle mr-2 text-primary"></i> Instructions
+                    </h3>
+                    <ul class="space-y-3 text-gray-600">
+                        <li class="flex items-start">
+                            <i class="fas fa-check text-green-500 mt-1 mr-2"></i>
+                            <span>L'horaire est organisé par semaines (Samedi à Vendredi).</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fas fa-check text-green-500 mt-1 mr-2"></i>
+                            <span>Chaque semaine montre les dates spécifiques du mois.</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fas fa-check text-green-500 mt-1 mr-2"></i>
+                            <span>Utilisez le format <strong>[1-12] [AM/PM] - [1-12] [AM/PM]</strong> pour les horaires.</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fas fa-check text-green-500 mt-1 mr-2"></i>
+                            <span>Les totaux sont calculés par semaine et pour tout le mois.</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fas fa-check text-green-500 mt-1 mr-2"></i>
+                            <span>Cliquez sur <strong>"Jours Fériés"</strong> pour marquer les jours de congé comme "STATS".</span>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="bg-white p-6 rounded-xl elegant-shadow">
+                    <h3 class="text-xl font-bold text-dark mb-4 flex items-center">
+                        <i class="fas fa-users mr-2 text-primary"></i> Personnes dans l'Horaire
+                    </h3>
+                    <div id="peopleList" class="space-y-3">
+                        <!-- Liste de personnes générée par JavaScript -->
+                    </div>
+                    <button id="editPeopleBtn" class="mt-6 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 font-medium rounded-lg transition duration-300 flex items-center">
+                        <i class="fas fa-edit mr-2"></i> Modifier les Noms
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Statistiques du mois -->
+            <div class="bg-white p-6 rounded-xl elegant-shadow mb-10">
+                <h3 class="text-xl font-bold text-dark mb-4 flex items-center">
+                    <i class="fas fa-chart-bar mr-2 text-primary"></i> Statistiques du Mois
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div class="bg-blue-50 p-4 rounded-lg">
+                        <p class="text-sm text-blue-700">Jours ouvrables</p>
+                        <p id="workingDays" class="text-2xl font-bold text-blue-800">0</p>
+                    </div>
+                    <div class="bg-green-50 p-4 rounded-lg">
+                        <p class="text-sm text-green-700">Jours fériés</p>
+                        <p id="holidayDays" class="text-2xl font-bold text-green-800">0</p>
+                    </div>
+                    <div class="bg-yellow-50 p-4 rounded-lg">
+                        <p class="text-sm text-yellow-700">Weekends</p>
+                        <p id="weekendDays" class="text-2xl font-bold text-yellow-800">0</p>
+                    </div>
+                    <div class="bg-purple-50 p-4 rounded-lg">
+                        <p class="text-sm text-purple-700">Total jours</p>
+                        <p id="totalDays" class="text-2xl font-bold text-purple-800">0</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <!-- Modal pour éditer les noms -->
+    <div id="editPeopleModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-xl p-8 max-w-md w-full mx-4 elegant-shadow">
+            <h3 class="text-2xl font-bold text-dark mb-6">Modifier les Noms des Personnes</h3>
+            <div id="peopleInputs" class="space-y-4 mb-6">
+                <!-- Inputs générés par JavaScript -->
+            </div>
+            <div class="flex justify-end space-x-4">
+                <button id="cancelEditBtn" class="px-5 py-2.5 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition duration-300">
+                    Annuler
+                </button>
+                <button id="savePeopleBtn" class="px-5 py-2.5 bg-primary hover:bg-secondary text-white font-medium rounded-lg transition duration-300">
+                    Enregistrer
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal pour gérer les jours fériés -->
+    <div id="holidaysModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-xl p-8 max-w-4xl w-full mx-4 elegant-shadow max-h-[90vh] overflow-y-auto">
+            <h3 class="text-2xl font-bold text-dark mb-6">Gestion des Jours Fériés 2026</h3>
+            
+            <div class="mb-6">
+                <div class="flex items-center mb-4">
+                    <div class="w-4 h-4 bg-holiday rounded mr-2"></div>
+                    <span class="text-gray-700">Jours marqués comme "STATS" (jours fériés)</span>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                    <!-- Jours fériés fixes pour 2026 -->
+                    <div class="border border-gray-200 rounded-lg p-4">
+                        <h4 class="font-bold text-dark mb-2">Jours fériés fixes 2026</h4>
+                        <ul class="space-y-1 text-sm">
+                            <li class="flex justify-between">
+                                <span>1er Janvier</span>
+                                <span class="ferie-tag">STATS</span>
+                            </li>
+                            <li class="flex justify-between">
+                                <span>25 Décembre</span>
+                                <span class="ferie-tag">STATS</span>
+                            </li>
+                        </ul>
+                    </div>
+                    
+                    <!-- Sélection par mois -->
+                    <div class="border border-gray-200 rounded-lg p-4">
+                        <h4 class="font-bold text-dark mb-2">Ajouter un jour férié</h4>
+                        <div class="space-y-3">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                                <input type="date" id="holidayDate" class="bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-primary focus:border-primary block w-full p-2.5" min="2026-01-01" max="2026-12-31">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                                <input type="text" id="holidayDescription" class="bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-primary focus:border-primary block w-full p-2.5" placeholder="Ex: Jour de l'An, Noël..." value="STATS">
+                            </div>
+                            <button id="addHolidayBtn" class="w-full px-4 py-2 bg-primary hover:bg-secondary text-white font-medium rounded-lg transition duration-300">
+                                <i class="fas fa-plus mr-2"></i> Ajouter Jour Férié
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Jours fériés ajoutés -->
+                    <div class="border border-gray-200 rounded-lg p-4">
+                        <h4 class="font-bold text-dark mb-2">Vos jours fériés</h4>
+                        <div id="userHolidaysList" class="space-y-2 max-h-40 overflow-y-auto">
+                            <!-- Liste générée par JavaScript -->
+                        </div>
+                        <button id="clearHolidaysBtn" class="mt-4 w-full px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 font-medium rounded-lg transition duration-300">
+                            <i class="fas fa-trash-alt mr-2"></i> Effacer Tous
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <h4 class="font-bold text-blue-800 mb-2"><i class="fas fa-info-circle mr-2"></i>Information</h4>
+                    <p class="text-blue-700 text-sm">Les jours marqués comme "STATS" apparaîtront en rouge dans l'horaire. Les heures ne seront pas calculées pour ces jours.</p>
+                </div>
+            </div>
+            
+            <div class="flex justify-end space-x-4">
+                <button id="closeHolidaysBtn" class="px-5 py-2.5 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition duration-300">
+                    Fermer
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Données initiales
+        const people = ['JF Girard', 'Raphael L.', 'Mike DP', 'Batoul A.', 'Martine M.'];
+        const weekDays = ['Samedi', 'Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi'];
+        const weekDaysShort = ['Sam', 'Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven'];
+        const months = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
+        
+        // Jours fériés par défaut pour 2026 (dates fixes)
+        let holidays = {
+            '2026-01-01': 'Jour de l\'An - STATS',
+            '2026-05-01': 'Fête du Travail - STATS',
+            '2026-05-08': 'Victoire 1945 - STATS',
+            '2026-07-14': 'Fête Nationale - STATS',
+            '2026-08-15': 'Assomption - STATS',
+            '2026-11-01': 'Toussaint - STATS',
+            '2026-11-11': 'Armistice - STATS',
+            '2026-12-25': 'Noël - STATS'
+        };
+        
+        // Structure pour stocker les horaires par date
+        let scheduleData = {}; // Format: { '2026-06-01': { 0: {startHour: '8', ...}, 1: {...}, ... } }
+        
+        // Initialisation
+        document.addEventListener('DOMContentLoaded', function() {
+            
+            // Configurer l'année 2026 par défaut
+            document.getElementById('yearSelect').value = '2026';
+            
+            // Mettre à jour l'affichage du mois/année
+            updateMonthYearDisplay();
+            
+            // Initialiser les horaires pour le mois courant
+            initializeScheduleForCurrentMonth();
+            
+            // Renderiser les semaines
+            renderWeeklySchedules();
+            
+            // Renderiser liste de personnes
+            renderPeopleList();
+            
+            // Renderiser jours fériés de l'utilisateur
+            renderUserHolidays();
+            
+            // Mettre à jour les totaux
+            updateTotals();
+            
+            // Configurer événements
+            setupEventListeners();
+            
+            // Écouter les changements de mois/année
+            document.getElementById('monthSelect').addEventListener('change', function() {
+                initializeScheduleForCurrentMonth();
+                renderWeeklySchedules();
+                updateMonthYearDisplay();
+                updateTotals();
+            });
+            
+            document.getElementById('yearSelect').addEventListener('change', function() {
+                initializeScheduleForCurrentMonth();
+                renderWeeklySchedules();
+                updateMonthYearDisplay();
+                updateTotals();
+            });
+        });
+        
+        // Initialiser les horaires pour le mois courant
+        function initializeScheduleForCurrentMonth() {
+            const monthIndex = parseInt(document.getElementById('monthSelect').value);
+            const year = parseInt(document.getElementById('yearSelect').value);
+            
+            // Obtenir le premier et dernier jour du mois
+            const firstDay = new Date(year, monthIndex, 1);
+            const lastDay = new Date(year, monthIndex + 1, 0);
+            const daysInMonth = lastDay.getDate();
+
+            //console.log(firstDay, lastDay, daysInMonth)
+            
+            // Réinitialiser scheduleData pour ce mois
+            scheduleData = {};
+            
+            // Pour chaque jour du mois
+            for (let day = 1; day <= daysInMonth; day++) {
+                const date = new Date(year, monthIndex, day);
+                const dateStr = formatDate(date);
+                
+                // Initialiser un tableau vide pour chaque personne
+                scheduleData[dateStr] = [];
+                
+                // Pour chaque personne, initialiser l'horaire (null par défaut)
+                for (let personIndex = 0; personIndex < people.length; personIndex++) {
+                    // Si c'est un samedi, initialiser avec des heures par défaut
+                    if (date.getDay() === 6) { // 6 = Samedi
+                        scheduleData[dateStr][personIndex] = {
+                            startHour: '8',
+                            startAmPm: 'AM',
+                            endHour: '5',
+                            endAmPm: 'PM'
+                        };
+                    } else {
+                        scheduleData[dateStr][personIndex] = null;
+                    }
+                }
+            }
+        }
+        
+        // Formater une date en YYYY-MM-DD
+        function formatDate(date) {
+            const year = date.getFullYear();
+            const month = (date.getMonth() + 1).toString().padStart(2, '0');
+            const day = date.getDate().toString().padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+        
+        // Obtenir le jour de la semaine (0=Samedi, 1=Dimanche, etc.)
+        function getWeekDayIndex(date) {
+            // Convertir: 0=Dimanche -> 6=Samedi, 1=Lundi -> 0=Dimanche, etc.
+            const jsDay = date.getDay(); // 0=Dimanche, 1=Lundi, ..., 6=Samedi
+            //console.log(jsDay, date.getDate())
+            return jsDay === 6 ? 0 : jsDay + 1; // 0=Samedi, 1=Dimanche, ..., 6=Vendredi
+        }
+        
+        // Mettre à jour l'affichage du mois/année
+        function updateMonthYearDisplay() {
+            const monthIndex = document.getElementById('monthSelect').value;
+            const year = document.getElementById('yearSelect').value;
+            document.getElementById('currentMonthYear').textContent = `${months[monthIndex]} ${year}`;
+        }
+        
+        // Renderiser les horaires par semaine
+        function renderWeeklySchedules() {
+            const container = document.getElementById('weeklySchedulesContainer');
+            container.innerHTML = '';
+            
+            const monthIndex = parseInt(document.getElementById('monthSelect').value);
+            const year = parseInt(document.getElementById('yearSelect').value);
+            
+            // Obtenir le premier et dernier jour du mois
+            const firstDay = new Date(year, monthIndex, 1);
+            const lastDay = new Date(year, monthIndex + 1, 0);
+            const daysInMonth = lastDay.getDate();
+            
+            // Déterminer le jour de la semaine du premier jour (0=Samedi, 1=Dimanche, etc.)
+            let currentDay = 1;
+            let weekNumber = 1;
+            
+            while (currentDay <= daysInMonth) {
+                // Créer un conteneur pour la semaine
+                const weekContainer = document.createElement('div');
+                weekContainer.className = 'week-container mb-8 bg-white rounded-lg border border-gray-200 overflow-hidden elegant-shadow';
+                
+                // Titre de la semaine avec dates
+                const weekTitle = document.createElement('div');
+                weekTitle.className = 'week-title flex justify-between items-center';
+                
+                const startDate = new Date(year, monthIndex, currentDay);
+                const startDateStr = `${startDate.getDate()} ${months[startDate.getMonth()].substring(0, 3)}`;
+                
+                // Calculer la fin de la semaine (6 jours plus tard ou fin du mois)
+                let endDay = currentDay
+                let weekLength = 0;
+                while (endDay - currentDay < 6) {
+                    endDay++;
+                    weekLength++;
+                    console.log(endDay, new Date(year, monthIndex, endDay), getWeekDayIndex(new Date(year, monthIndex, endDay)))
+                    if(getWeekDayIndex(new Date(year, monthIndex, endDay)) === 6) {
+                        break;
+                    }
+                }
+                if (endDay > daysInMonth) {
+                    endDay = daysInMonth;
+                    weekLength = daysInMonth - currentDay + 1;
+                }
+                weekLength += 1
+                const endDate = new Date(year, monthIndex, endDay);
+                const endDateStr = `${endDate.getDate()} ${months[endDate.getMonth()].substring(0, 3)}`;
+                
+                weekTitle.innerHTML = `
+                    <span>Semaine ${weekNumber} (${startDateStr} - ${endDateStr})</span>
+                    <span class="text-sm bg-white text-primary px-2 py-1 rounded">Total semaine: <span id="weekTotal${weekNumber}" class="font-bold">0h</span></span>
+                `;
+                weekContainer.appendChild(weekTitle);
+                
+                // Tableau pour la semaine
+                const weekTable = document.createElement('table');
+                weekTable.className = 'w-full';
+                
+                // En-têtes du tableau (jours de la semaine)
+                const thead = document.createElement('thead');
+                thead.innerHTML = `
+                    <tr class="bg-gray-50">
+                        <th class="py-3 px-2 text-left font-semibold text-gray-700 border-b">Personnes</th>
+                `;
+                
+                // Ajouter les en-têtes pour chaque jour de la semaine
+                for (let i = 0; i < weekLength && currentDay + i <= daysInMonth; i++) {
+                    const day = currentDay + i;
+                    const date = new Date(year, monthIndex, day);
+                    const weekDayIndex = getWeekDayIndex(date);
+                    const dateStr = formatDate(date);
+                    const isHoliday = holidays.hasOwnProperty(dateStr);
+                    const isWeekend = weekDayIndex === 0 || weekDayIndex === 1;
+                    
+                    const th = document.createElement('th');
+                    th.className = `py-3 px-2 text-center font-semibold border-b ${isWeekend ? 'bg-blue-50' : ''} ${isHoliday ? 'bg-red-50' : ''}`;
+                    th.innerHTML = `
+                        <div class="font-bold">${weekDaysShort[weekDayIndex]}</div>
+                        <div class="text-sm ${isHoliday ? 'text-red-600 font-bold' : 'text-gray-600'}">${day}</div>
+                        ${isHoliday ? '<div class="text-xs text-red-500">FÉRIÉ</div>' : ''}
+                    `;
+                    thead.firstElementChild.appendChild(th);
+                }
+                
+                // Colonne pour le total de la semaine par personne
+                const totalTh = document.createElement('th');
+                totalTh.className = 'py-3 px-2 text-center font-semibold border-b bg-primary text-white';
+                totalTh.textContent = 'Total Semaine';
+                thead.firstElementChild.appendChild(totalTh);
+                
+                weekTable.appendChild(thead);
+                
+                // Corps du tableau
+                const tbody = document.createElement('tbody');
+                
+                // Pour chaque personne
+                for (let personIndex = 0; personIndex < people.length; personIndex++) {
+                    const personRow = document.createElement('tr');
+                    personRow.className = personIndex % 2 === 0 ? 'bg-white' : 'bg-gray-50';
+                    
+                    // Nom de la personne
+                    const nameCell = document.createElement('td');
+                    nameCell.className = 'py-3 px-2 font-medium text-dark border-b';
+                    nameCell.textContent = people[personIndex];
+                    personRow.appendChild(nameCell);
+                    
+                    let personWeekTotal = 0;
+                    
+                    // Pour chaque jour de la semaine
+                    for (let i = 0; i < weekLength && currentDay + i <= daysInMonth; i++) {
+                        const day = currentDay + i;
+                        const date = new Date(year, monthIndex, day);
+                        const dateStr = formatDate(date);
+                        const weekDayIndex = getWeekDayIndex(date);
+                        const isHoliday = holidays.hasOwnProperty(dateStr);
+                        const isWeekend = weekDayIndex === 0 || weekDayIndex === 1;
+                        
+                        const dayCell = document.createElement('td');
+                        dayCell.className = `py-2 px-1 border-b min-w-[130px] ${isWeekend ? 'weekend' : ''} ${isHoliday ? 'holiday-cell' : ''}`;
+                        
+                        const timeSlot = scheduleData[dateStr] ? scheduleData[dateStr][personIndex] : null;
+                        
+                        if (isHoliday) {
+                            // Jour férié
+                            dayCell.innerHTML = '<div class="text-center py-2"><span class="text-holiday font-bold text-sm">STATS</span></div>';
+                        } else if (timeSlot) {
+                            // Calculer heures travaillées
+                            const hours = calculateHours(timeSlot);
+                            personWeekTotal += hours;
+                            
+                            // Créer interface d'entrée d'horaire
+                            const timeInputDiv = document.createElement('div');
+                            timeInputDiv.className = 'time-input flex flex-col items-center space-y-1';
+                            
+                            // Ligne pour les heures de début
+                            const startRow = document.createElement('div');
+                            startRow.className = 'flex items-center space-x-1';
+                            
+                            const startHourSelect = createHourSelect(timeSlot.startHour, `person-${personIndex}-date-${dateStr}-start-hour`);
+                            const startAmPmSelect = createAmPmSelect(timeSlot.startAmPm, `person-${personIndex}-date-${dateStr}-start-ampm`);
+                            
+                            startRow.appendChild(startHourSelect);
+                            startRow.appendChild(startAmPmSelect);
+                            
+                            // Séparateur
+                            const separator = document.createElement('div');
+                            separator.className = 'text-gray-500 font-medium';
+                            separator.textContent = '-';
+                            
+                            // Ligne pour les heures de fin
+                            const endRow = document.createElement('div');
+                            endRow.className = 'flex items-center space-x-1';
+                            
+                            const endHourSelect = createHourSelect(timeSlot.endHour, `person-${personIndex}-date-${dateStr}-end-hour`);
+                            const endAmPmSelect = createAmPmSelect(timeSlot.endAmPm, `person-${personIndex}-date-${dateStr}-end-ampm`);
+                            
+                            endRow.appendChild(endHourSelect);
+                            endRow.appendChild(endAmPmSelect);
+                            
+                            // Ajouter événements
+                            [startHourSelect, startAmPmSelect, endHourSelect, endAmPmSelect].forEach(select => {
+                                select.addEventListener('change', function() {
+                                    updateTimeSlot(dateStr, personIndex, {
+                                        startHour: startHourSelect.value,
+                                        startAmPm: startAmPmSelect.value,
+                                        endHour: endHourSelect.value,
+                                        endAmPm: endAmPmSelect.value
+                                    });
+                                });
+                            });
+                            
+                            // Assembler tout
+                            timeInputDiv.appendChild(startRow);
+                            timeInputDiv.appendChild(separator);
+                            timeInputDiv.appendChild(endRow);
+                            
+                            // Badge d'heures
+                            const hoursBadge = document.createElement('div');
+                            hoursBadge.className = 'text-xs font-medium text-primary mt-1';
+                            hoursBadge.textContent = `${hours}h`;
+                            
+                            dayCell.appendChild(timeInputDiv);
+                            dayCell.appendChild(hoursBadge);
+                        } else {
+                            // Jour libre
+                            const freeDiv = document.createElement('div');
+                            freeDiv.className = 'text-center py-3';
+                            
+                            const freeText = document.createElement('span');
+                            freeText.className = 'text-gray-400 italic text-sm';
+                            freeText.textContent = 'Libre';
+                            freeDiv.appendChild(freeText);
+                            
+                            // Bouton pour ajouter
+                            const addBtn = document.createElement('button');
+                            addBtn.className = 'mt-1 text-xs text-primary hover:text-secondary font-medium';
+                            addBtn.innerHTML = '<i class="fas fa-plus mr-1"></i> Ajouter';
+                            addBtn.addEventListener('click', function() {
+                                addTimeSlot(dateStr, personIndex);
+                            });
+                            freeDiv.appendChild(addBtn);
+                            
+                            dayCell.appendChild(freeDiv);
+                        }
+                        
+                        personRow.appendChild(dayCell);
+                    }
+                    
+                    // Total de la semaine pour cette personne
+                    const totalCell = document.createElement('td');
+                    totalCell.className = 'py-3 px-2 border-b font-bold text-center text-primary bg-blue-50';
+                    totalCell.textContent = `${personWeekTotal}h`;
+                    personRow.appendChild(totalCell);
+                    
+                    tbody.appendChild(personRow);
+                }
+                
+                // Ligne pour les totaux par jour
+                const totalsRow = document.createElement('tr');
+                totalsRow.className = 'bg-gray-100';
+                
+                const totalsLabelCell = document.createElement('td');
+                totalsLabelCell.className = 'py-3 px-2 font-bold text-dark border-b';
+                totalsLabelCell.textContent = 'Total par Jour';
+                totalsRow.appendChild(totalsLabelCell);
+                
+                let weekTotalHours = 0;
+                
+                // Pour chaque jour de la semaine
+                for (let i = 0; i < weekLength && currentDay + i <= daysInMonth; i++) {
+                    const day = currentDay + i;
+                    const date = new Date(year, monthIndex, day);
+                    const dateStr = formatDate(date);
+                    const isHoliday = holidays.hasOwnProperty(dateStr);
+                    
+                    let dayTotal = 0;
+                    
+                    if (!isHoliday) {
+                        for (let personIndex = 0; personIndex < people.length; personIndex++) {
+                            const timeSlot = scheduleData[dateStr] ? scheduleData[dateStr][personIndex] : null;
+                            if (timeSlot) {
+                                dayTotal += calculateHours(timeSlot);
+                            }
+                        }
+                    }
+                    
+                    weekTotalHours += dayTotal;
+                    
+                    const dayTotalCell = document.createElement('td');
+                    dayTotalCell.className = 'py-3 px-2 border-b font-bold text-center text-dark';
+                    dayTotalCell.textContent = isHoliday ? 'STATS' : `${dayTotal}h`;
+                    dayTotalCell.style.backgroundColor = isHoliday ? '#fef2f2' : '';
+                    
+                    totalsRow.appendChild(dayTotalCell);
+                }
+                
+                // Cellule pour le total de la semaine
+                const weekTotalCell = document.createElement('td');
+                weekTotalCell.className = 'py-3 px-2 border-b font-bold text-center text-primary text-lg bg-blue-50';
+                weekTotalCell.textContent = `${weekTotalHours}h`;
+                totalsRow.appendChild(weekTotalCell);
+                
+                tbody.appendChild(totalsRow);
+                
+                weekTable.appendChild(tbody);
+                weekContainer.appendChild(weekTable);
+                
+                // Mettre à jour le total de la semaine dans le titre
+                setTimeout(() => {
+                    const weekTotalElement = document.getElementById(`weekTotal${weekNumber}`);
+                    if (weekTotalElement) {
+                        weekTotalElement.textContent = `${weekTotalHours}h`;
+                    }
+                }, 0);
+                
+                container.appendChild(weekContainer);
+                
+                // Passer à la semaine suivante
+                currentDay += weekLength;
+                weekNumber++;
+            }
+            
+            // Mettre à jour les statistiques
+            updateMonthStats();
+        }
+        
+        // Mettre à jour les statistiques du mois
+        function updateMonthStats() {
+            const monthIndex = parseInt(document.getElementById('monthSelect').value);
+            const year = parseInt(document.getElementById('yearSelect').value);
+            
+            // Obtenir le dernier jour du mois
+            const lastDay = new Date(year, monthIndex + 1, 0);
+            const daysInMonth = lastDay.getDate();
+            
+            let workingDays = 0;
+            let holidayDays = 0;
+            let weekendDays = 0;
+            
+            // Pour chaque jour du mois
+            for (let day = 1; day <= daysInMonth; day++) {
+                const date = new Date(year, monthIndex, day);
+                const dateStr = formatDate(date);
+                const weekDayIndex = getWeekDayIndex(date);
+                const isWeekend = weekDayIndex === 0 || weekDayIndex === 1;
+                const isHoliday = holidays.hasOwnProperty(dateStr);
+                
+                if (isHoliday) {
+                    holidayDays++;
+                } else if (isWeekend) {
+                    weekendDays++;
+                } else {
+                    workingDays++;
+                }
+            }
+            
+            // Mettre à jour l'affichage
+            document.getElementById('workingDays').textContent = workingDays;
+            document.getElementById('holidayDays').textContent = holidayDays;
+            document.getElementById('weekendDays').textContent = weekendDays;
+            document.getElementById('totalDays').textContent = daysInMonth;
+        }
+        
+        // Créer dropdown pour sélectionner heure (1-12) - version compacte
+        function createHourSelect(selectedValue, id) {
+            const select = document.createElement('select');
+            select.id = id;
+            select.className = 'bg-gray-50 border border-gray-300 text-gray-900 rounded focus:ring-1 focus:ring-primary focus:border-primary block w-12 py-1 text-center text-sm';
+            
+            for (let i = 1; i <= 12; i++) {
+                const option = document.createElement('option');
+                option.value = i.toString();
+                option.textContent = i.toString();
+                if (i.toString() === selectedValue) {
+                    option.selected = true;
+                }
+                select.appendChild(option);
+            }
+            
+            return select;
+        }
+        
+        // Créer dropdown pour sélectionner AM/PM - version compacte
+        function createAmPmSelect(selectedValue, id) {
+            const select = document.createElement('select');
+            select.id = id;
+            select.className = 'bg-gray-50 border border-gray-300 text-gray-900 rounded focus:ring-1 focus:ring-primary focus:border-primary block w-12 py-1 text-center text-sm';
+            
+            const amOption = document.createElement('option');
+            amOption.value = 'AM';
+            amOption.textContent = 'AM';
+            if (selectedValue === 'AM') amOption.selected = true;
+            
+            const pmOption = document.createElement('option');
+            pmOption.value = 'PM';
+            pmOption.textContent = 'PM';
+            if (selectedValue === 'PM') pmOption.selected = true;
+            
+            select.appendChild(amOption);
+            select.appendChild(pmOption);
+            
+            return select;
+        }
+        
+        // Calculer heures entre deux horaires au format 12h
+        function calculateHours(timeSlot) {
+            if (!timeSlot) return 0;
+            
+            // Convertir au format 24h pour faciliter calcul
+            const startHour12 = parseInt(timeSlot.startHour);
+            const endHour12 = parseInt(timeSlot.endHour);
+            
+            let startHour24 = startHour12;
+            let endHour24 = endHour12;
+            
+            // Convertir AM/PM en 24h
+            if (timeSlot.startAmPm === 'PM' && startHour12 !== 12) {
+                startHour24 += 12;
+            }
+            if (timeSlot.startAmPm === 'AM' && startHour12 === 12) {
+                startHour24 = 0;
+            }
+            
+            if (timeSlot.endAmPm === 'PM' && endHour12 !== 12) {
+                endHour24 += 12;
+            }
+            if (timeSlot.endAmPm === 'AM' && endHour12 === 12) {
+                endHour24 = 0;
+            }
+            
+            // Calculer différence
+            let hours = endHour24 - startHour24;
+            
+            // Si la fin est le jour suivant (ex: 10PM - 2AM)
+            if (hours < 0) {
+                hours += 24;
+            }
+            
+            return hours;
+        }
+        
+        // Mettre à jour un créneau horaire
+        function updateTimeSlot(dateStr, personIndex, timeSlot) {
+            if (!scheduleData[dateStr]) {
+                scheduleData[dateStr] = [];
+            }
+            scheduleData[dateStr][personIndex] = timeSlot;
+            updateTotals();
+            renderWeeklySchedules(); // Re-render pour mettre à jour les totaux
+        }
+        
+        // Ajouter un créneau horaire
+        function addTimeSlot(dateStr, personIndex) {
+            if (!scheduleData[dateStr]) {
+                scheduleData[dateStr] = [];
+            }
+            
+            scheduleData[dateStr][personIndex] = {
+                startHour: '9',
+                startAmPm: 'AM',
+                endHour: '5',
+                endAmPm: 'PM'
+            };
+            
+            // Re-renderiser
+            renderWeeklySchedules();
+            updateTotals();
+        }
+        
+        // Mettre à jour les totaux
+        function updateTotals() {
+            const monthIndex = parseInt(document.getElementById('monthSelect').value);
+            const year = parseInt(document.getElementById('yearSelect').value);
+            
+            // Obtenir le dernier jour du mois
+            const lastDay = new Date(year, monthIndex + 1, 0);
+            const daysInMonth = lastDay.getDate();
+            
+            let monthTotalHours = 0;
+            
+            // Pour chaque jour du mois
+            for (let day = 1; day <= daysInMonth; day++) {
+                const date = new Date(year, monthIndex, day);
+                const dateStr = formatDate(date);
+                const isHoliday = holidays.hasOwnProperty(dateStr);
+                
+                if (!isHoliday) {
+                    for (let personIndex = 0; personIndex < people.length; personIndex++) {
+                        const timeSlot = scheduleData[dateStr] ? scheduleData[dateStr][personIndex] : null;
+                        if (timeSlot) {
+                            monthTotalHours += calculateHours(timeSlot);
+                        }
+                    }
+                }
+            }
+            
+            // Mettre à jour l'affichage du total mensuel
+            document.getElementById('monthTotal').textContent = `${monthTotalHours}h`;
+        }
+        
+        // Renderiser liste de personnes
+        function renderPeopleList() {
+            const peopleList = document.getElementById('peopleList');
+            peopleList.innerHTML = '';
+            
+            people.forEach((person, index) => {
+                const personDiv = document.createElement('div');
+                personDiv.className = 'flex items-center p-3 bg-gray-50 rounded-lg';
+                
+                const avatar = document.createElement('div');
+                avatar.className = 'flex-shrink-0 w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center font-bold mr-4';
+                avatar.textContent = person.charAt(0);
+                
+                const nameDiv = document.createElement('div');
+                nameDiv.className = 'font-medium text-dark';
+                nameDiv.textContent = person;
+                
+                personDiv.appendChild(avatar);
+                personDiv.appendChild(nameDiv);
+                peopleList.appendChild(personDiv);
+            });
+            
+            // Renderiser inputs dans le modal
+            renderPeopleInputs();
+        }
+        
+        // Renderiser inputs pour éditer noms
+        function renderPeopleInputs() {
+            const peopleInputs = document.getElementById('peopleInputs');
+            peopleInputs.innerHTML = '';
+            
+            people.forEach((person, index) => {
+                const inputGroup = document.createElement('div');
+                inputGroup.className = 'mb-4';
+                
+                const label = document.createElement('label');
+                label.className = 'block text-sm font-medium text-gray-700 mb-1';
+                label.textContent = `Personne ${index + 1}`;
+                label.htmlFor = `personInput${index}`;
+                
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.id = `personInput${index}`;
+                input.className = 'bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-primary focus:border-primary block w-full p-2.5';
+                input.value = person;
+                
+                inputGroup.appendChild(label);
+                inputGroup.appendChild(input);
+                peopleInputs.appendChild(inputGroup);
+            });
+        }
+        
+        // Renderiser jours fériés de l'utilisateur
+        function renderUserHolidays() {
+            const userHolidaysList = document.getElementById('userHolidaysList');
+            userHolidaysList.innerHTML = '';
+            
+            // Trier les dates
+            const sortedDates = Object.keys(holidays).sort();
+            
+            if (sortedDates.length === 0) {
+                userHolidaysList.innerHTML = '<p class="text-gray-500 text-sm italic">Aucun jour férié ajouté</p>';
+                return;
+            }
+            
+            sortedDates.forEach(dateStr => {
+                const holidayItem = document.createElement('div');
+                holidayItem.className = 'flex justify-between items-center p-2 bg-gray-50 rounded';
+                
+                const date = new Date(dateStr);
+                const formattedDate = `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()}`;
+                
+                const dateSpan = document.createElement('span');
+                dateSpan.className = 'text-sm';
+                dateSpan.textContent = `${formattedDate} - ${holidays[dateStr]}`;
+                
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'text-red-500 hover:text-red-700';
+                deleteBtn.innerHTML = '<i class="fas fa-times"></i>';
+                deleteBtn.addEventListener('click', function() {
+                    deleteHoliday(dateStr);
+                });
+                
+                holidayItem.appendChild(dateSpan);
+                holidayItem.appendChild(deleteBtn);
+                userHolidaysList.appendChild(holidayItem);
+            });
+        }
+        
+        // Ajouter un jour férié
+        function addHoliday() {
+            const dateInput = document.getElementById('holidayDate');
+            const descriptionInput = document.getElementById('holidayDescription');
+            
+            if (!dateInput.value) {
+                alert('Veuillez sélectionner une date');
+                return;
+            }
+            
+            const dateStr = dateInput.value;
+            const description = descriptionInput.value || 'STATS';
+            
+            // Vérifier si la date est déjà dans la liste
+            if (holidays.hasOwnProperty(dateStr)) {
+                if (!confirm('Cette date est déjà marquée comme jour férié. Voulez-vous la remplacer?')) {
+                    return;
+                }
+            }
+            
+            // Ajouter le jour férié
+            holidays[dateStr] = description;
+            
+            // Mettre à jour l'affichage
+            renderUserHolidays();
+            renderWeeklySchedules();
+            updateTotals();
+            updateMonthStats();
+            
+            // Réinitialiser les champs
+            dateInput.value = '';
+            descriptionInput.value = 'STATS';
+            
+            alert('Jour férié ajouté avec succès!');
+        }
+        
+        // Supprimer un jour férié
+        function deleteHoliday(dateStr) {
+            if (confirm('Voulez-vous vraiment supprimer ce jour férié?')) {
+                delete holidays[dateStr];
+                renderUserHolidays();
+                renderWeeklySchedules();
+                updateTotals();
+                updateMonthStats();
+            }
+        }
+        
+        // Effacer tous les jours fériés
+        function clearAllHolidays() {
+            if (confirm('Voulez-vous vraiment supprimer tous les jours fériés ajoutés?')) {
+                // Ne supprimer que les jours fériés ajoutés par l'utilisateur (garder les jours fixes)
+                const fixedHolidays = [
+                    '2026-01-01', '2026-05-01', '2026-05-08', '2026-07-14',
+                    '2026-08-15', '2026-11-01', '2026-11-11', '2026-12-25'
+                ];
+                
+                const newHolidays = {};
+                fixedHolidays.forEach(date => {
+                    if (holidays[date]) {
+                        newHolidays[date] = holidays[date];
+                    }
+                });
+                
+                holidays = newHolidays;
+                renderUserHolidays();
+                renderWeeklySchedules();
+                updateTotals();
+                updateMonthStats();
+            }
+        }
+        
+        // Configurer événements
+        function setupEventListeners() {
+            // Bouton pour ajouter nouveau mois
+            document.getElementById('addMonthBtn').addEventListener('click', function() {
+                if (confirm('Cela effacera tous les horaires actuels pour ce mois. Voulez-vous continuer?')) {
+                    // Réinitialiser les horaires pour le mois courant
+                    initializeScheduleForCurrentMonth();
+                    renderWeeklySchedules();
+                    updateTotals();
+                    
+                    alert('Nouveau mois créé! Vous pouvez maintenant remplir les horaires.');
+                }
+            });
+            
+            // Bouton pour gérer les jours fériés
+            document.getElementById('manageHolidaysBtn').addEventListener('click', function() {
+                document.getElementById('holidaysModal').classList.remove('hidden');
+            });
+            
+            // Bouton pour exporter PDF
+            document.getElementById('exportPdfBtn').addEventListener('click', exportToPDF);
+            
+            // Bouton pour éditer personnes
+            document.getElementById('editPeopleBtn').addEventListener('click', function() {
+                document.getElementById('editPeopleModal').classList.remove('hidden');
+            });
+            
+            // Bouton pour annuler édition
+            document.getElementById('cancelEditBtn').addEventListener('click', function() {
+                document.getElementById('editPeopleModal').classList.add('hidden');
+                // Restaurer valeurs originales
+                renderPeopleInputs();
+            });
+            
+            // Bouton pour sauvegarder édition
+            document.getElementById('savePeopleBtn').addEventListener('click', function() {
+                // Mettre à jour noms
+                for (let i = 0; i < people.length; i++) {
+                    const input = document.getElementById(`personInput${i}`);
+                    if (input) {
+                        people[i] = input.value.trim() || `Personne ${i + 1}`;
+                    }
+                }
+                
+                // Fermer modal
+                document.getElementById('editPeopleModal').classList.add('hidden');
+                
+                // Mettre à jour interface
+                renderWeeklySchedules();
+                renderPeopleList();
+                
+                alert('Noms mis à jour avec succès!');
+            });
+            
+            // Bouton pour ajouter jour férié
+            document.getElementById('addHolidayBtn').addEventListener('click', addHoliday);
+            
+            // Bouton pour effacer tous les jours fériés
+            document.getElementById('clearHolidaysBtn').addEventListener('click', clearAllHolidays);
+            
+            // Bouton pour fermer modal des jours fériés
+            document.getElementById('closeHolidaysBtn').addEventListener('click', function() {
+                document.getElementById('holidaysModal').classList.add('hidden');
+            });
+            
+            // Fermer modal en cliquant à l'extérieur
+            document.getElementById('editPeopleModal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    this.classList.add('hidden');
+                    renderPeopleInputs();
+                }
+            });
+            
+            document.getElementById('holidaysModal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    this.classList.add('hidden');
+                }
+            });
+        }
+        
+        // Exporter en PDF
+        function exportToPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({
+                orientation: 'portrait',
+                unit: 'mm',
+                format: 'a4'
+            });
+            
+            const monthIndex = parseInt(document.getElementById('monthSelect').value);
+            const year = parseInt(document.getElementById('yearSelect').value);
+            const monthName = months[monthIndex];
+            
+            // Obtenir les dates du mois
+            const lastDay = new Date(year, monthIndex + 1, 0);
+            const daysInMonth = lastDay.getDate();
+            
+            let currentPage = 1;
+            let yPosition = 20;
+            
+            // Fonction pour ajouter une nouvelle page
+            function addNewPage() {
+                doc.addPage();
+                currentPage++;
+                yPosition = 20;
+                
+                // Titre sur chaque page
+                doc.setFontSize(16);
+                doc.setTextColor(59, 130, 246);
+                doc.text(`Horaire Mensuel - ${monthName} ${year} - Page ${currentPage}`, 105, 15, { align: 'center' });
+            }
+            
+            // Titre sur la première page
+            doc.setFontSize(20);
+            doc.setTextColor(59, 130, 246);
+            doc.text(`Horaire Mensuel - ${monthName} ${year}`, 105, 15, { align: 'center' });
+            
+            // Calculer le nombre de semaines
+            let currentDay = 1;
+            let endDay = currentDay;
+            let weekNumber = 1;
+            let weekLength = 0;
+
+            const set_ = ()=> {
+                weekLength = 0;
+                endDay = currentDay;
+                while (endDay - currentDay < 6) {
+                    endDay++;
+                    weekLength++;
+                    //console.log(endDay, new Date(year, monthIndex, endDay), getWeekDayIndex(new Date(year, monthIndex, endDay)))
+                    if(getWeekDayIndex(new Date(year, monthIndex, endDay)) === 6) {
+                        break;
+                    }
+                }
+                if (endDay > daysInMonth) {
+                    endDay = daysInMonth;
+                    weekLength = daysInMonth - currentDay + 1;
+                }
+                weekLength += 1
+            }
+
+            set_()
+            
+            while (currentDay <= daysInMonth) {
+                // Vérifier si on a assez d'espace pour une nouvelle semaine
+                if (yPosition > 250) {
+                    addNewPage();
+                }
+                
+                // Préparer données pour cette semaine
+                const weekHeaders = [''];
+                const weekData = [];
+                
+                // Ajouter les en-têtes pour chaque jour de la semaine
+                for (let i = 0; i < weekLength && currentDay + i <= daysInMonth; i++) {
+                    const day = currentDay + i;
+                    const date = new Date(year, monthIndex, day);
+                    const weekDayIndex = getWeekDayIndex(date);
+                    weekHeaders.push(`${weekDaysShort[weekDayIndex]} ${day}`);
+                }
+                weekHeaders.push('Total');
+                
+                // Pour chaque personne
+                for (let personIndex = 0; personIndex < people.length; personIndex++) {
+                    const row = [people[personIndex]];
+                    let personWeekTotal = 0;
+                    
+                    // Pour chaque jour de la semaine
+                    for (let i = 0; i < weekLength && currentDay + i <= daysInMonth; i++) {
+                        const day = currentDay + i;
+                        const date = new Date(year, monthIndex, day);
+                        const dateStr = formatDate(date);
+                        const isHoliday = holidays.hasOwnProperty(dateStr);
+                        
+                        if (isHoliday) {
+                            row.push('STATS');
+                        } else {
+                            const timeSlot = scheduleData[dateStr] ? scheduleData[dateStr][personIndex] : null;
+                            if (timeSlot) {
+                                const hours = calculateHours(timeSlot);
+                                personWeekTotal += hours;
+                                row.push(`${timeSlot.startHour}${timeSlot.startAmPm}-${timeSlot.endHour}${timeSlot.endAmPm}`);
+                            } else {
+                                row.push('');
+                            }
+                        }
+                    }
+                    
+                    row.push(`${personWeekTotal}h`);
+                    weekData.push(row);
+                }
+                
+                // Générer le tableau pour cette semaine
+                doc.autoTable({
+                    head: [weekHeaders],
+                    body: weekData,
+                    startY: yPosition,
+                    styles: {
+                        fontSize: 12,
+                        fontStyle: 'bold',
+                        cellPadding: 2.5,
+                        overflow: 'linebreak'
+                    },
+                    headStyles: {
+                        fillColor: [59, 130, 246],
+                        textColor: 255,
+                        fontStyle: 'bold'
+                    },
+                    alternateRowStyles: {
+                        fillColor: [240, 240, 240]
+                    },
+                    margin: { left: 10, right: 10 },
+                    tableWidth: 'wrap'
+                });
+                
+                // Mettre à jour la position Y pour la prochaine semaine
+                yPosition = doc.lastAutoTable.finalY + 3;
+                
+                // Passer à la semaine suivante
+                currentDay += weekLength;
+                weekNumber++;
+                set_()
+            }
+            
+            // Ajouter les statistiques sur la dernière page
+            addNewPage();
+            
+            doc.setFontSize(16);
+            doc.setTextColor(59, 130, 246);
+            doc.text(`Statistiques - ${monthName} ${year}`, 105, yPosition, { align: 'center' });
+            yPosition += 10;
+            
+            // Calculer les statistiques
+            let workingDays = 0;
+            let holidayDays = 0;
+            let weekendDays = 0;
+            let monthTotalHours = 0;
+            
+            for (let day = 1; day <= daysInMonth; day++) {
+                const date = new Date(year, monthIndex, day);
+                const dateStr = formatDate(date);
+                const weekDayIndex = getWeekDayIndex(date);
+                const isWeekend = weekDayIndex === 0 || weekDayIndex === 1;
+                const isHoliday = holidays.hasOwnProperty(dateStr);
+                
+                if (isHoliday) {
+                    holidayDays++;
+                } else if (isWeekend) {
+                    weekendDays++;
+                } else {
+                    workingDays++;
+                }
+                
+                // Calculer le total d'heures
+                if (!isHoliday) {
+                    for (let personIndex = 0; personIndex < people.length; personIndex++) {
+                        const timeSlot = scheduleData[dateStr] ? scheduleData[dateStr][personIndex] : null;
+                        if (timeSlot) {
+                            monthTotalHours += calculateHours(timeSlot);
+                        }
+                    }
+                }
+            }
+            
+            // Tableau de statistiques
+            const statsData = [
+                ['Jours ouvrables', workingDays],
+                ['Jours fériés (STATS)', holidayDays],
+                ['Weekends', weekendDays],
+                ['Total jours', daysInMonth],
+                ['Total heures du mois', `${monthTotalHours}h`]
+            ];
+            
+            doc.autoTable({
+                head: [['Statistique', 'Valeur']],
+                body: statsData,
+                startY: yPosition,
+                styles: {
+                    fontSize: 10,
+                    cellPadding: 5
+                },
+                headStyles: {
+                    fillColor: [59, 130, 246],
+                    textColor: 255,
+                    fontStyle: 'bold'
+                },
+                margin: { left: 60, right: 60 }
+            });
+            
+            // Sauvegarder PDF
+            doc.save(`horaire-mensuel-${monthName.toLowerCase()}-${year}.pdf`);
+        }
+    </script>
+</body>
+</html>
