@@ -513,8 +513,13 @@
                 
                 weekTitle.innerHTML = `
                     <span>Semaine ${weekNumber} (${startDateStr} - ${endDateStr})</span>
-                    <span class="text-sm bg-white text-primary px-2 py-1 rounded">Total semaine: <span id="weekTotal${weekNumber}" class="font-bold">0h</span></span>
                 `;
+                
+                const __ewth = document.createElement('span')
+                __ewth.className = 'text-sm bg-white text-primary px-2 py-1 rounded'
+                __ewth.innerHTML = 'Total semaine: <span class="font-bold">0h</span>'
+
+                weekTitle.appendChild(__ewth)
                 weekContainer.appendChild(weekTitle);
                 
                 // Tableau pour la semaine
@@ -734,18 +739,10 @@
                 
                 weekTable.appendChild(tbody);
                 weekContainer.appendChild(weekTable);
+
+                __ewth.innerHTML = `Total semaine: <span class="font-bold">${weekTotalHours}h</span>`
                 
                 container.appendChild(weekContainer);
-                
-                // Mettre à jour le total de la semaine dans le titre
-                setTimeout(() => {
-                    const weekTotalElement = document.getElementById(`weekTotal${weekNumber}`);
-                    alert(weekTotalElement)
-                    //if (weekTotalElement) {
-                        //alert('EXISTE')
-                        weekTotalElement.textContent = `${weekTotalHours}h`;
-                    //}
-                }, 10);
                 
                 // Passer à la semaine suivante
                 currentDay += weekLength;
