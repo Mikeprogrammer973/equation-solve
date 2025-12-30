@@ -426,16 +426,16 @@
                 // Pour chaque personne, initialiser l'horaire (null par défaut)
                 for (let personIndex = 0; personIndex < people.length; personIndex++) {
                     // Si c'est un samedi, initialiser avec des heures par défaut
-                    if (date.getDay() === 6) { // 6 = Samedi
+                    /*if (date.getDay() === 6) { // 6 = Samedi
                         scheduleData[dateStr][personIndex] = {
                             startHour: '8',
                             startAmPm: 'AM',
                             endHour: '5',
                             endAmPm: 'PM'
                         };
-                    } else {
+                    } else {*/
                         scheduleData[dateStr][personIndex] = null;
-                    }
+                    //}
                 }
             }
         }
@@ -643,6 +643,10 @@
                             const hoursBadge = document.createElement('div');
                             hoursBadge.className = 'text-xs font-medium text-primary mt-1';
                             hoursBadge.textContent = `${hours}h`;
+
+                            hoursBadge.addEventListener('click', function () {
+                                scheduleData[dateStr][personIndex] = null
+                            })
                             
                             dayCell.appendChild(timeInputDiv);
                             dayCell.appendChild(hoursBadge);
