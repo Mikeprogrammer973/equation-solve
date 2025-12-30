@@ -641,10 +641,11 @@
                             
                             // Badge d'heures
                             const hoursBadge = document.createElement('div');
-                            hoursBadge.className = 'text-xs font-medium text-primary mt-1';
+                            hoursBadge.className = 'text-xs p-1 rounded-lg border border-gray-100 border-2 font-medium text-primary mt-1';
                             hoursBadge.textContent = `${hours}h`;
 
                             hoursBadge.addEventListener('click', function () {
+                                alert('●●●')
                                 addTimeSlot(dateStr, personIndex, true);
                             })
                             
