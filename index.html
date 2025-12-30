@@ -735,15 +735,16 @@
                 weekTable.appendChild(tbody);
                 weekContainer.appendChild(weekTable);
                 
+                container.appendChild(weekContainer);
+                
                 // Mettre à jour le total de la semaine dans le titre
                 setTimeout(() => {
                     const weekTotalElement = document.getElementById(`weekTotal${weekNumber}`);
                     if (weekTotalElement) {
+                        alert('EXISTE')
                         weekTotalElement.textContent = `${weekTotalHours}h`;
                     }
-                }, 0);
-                
-                container.appendChild(weekContainer);
+                }, 10);
                 
                 // Passer à la semaine suivante
                 currentDay += weekLength;
