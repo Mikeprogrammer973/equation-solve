@@ -739,12 +739,12 @@
                 
                 // Mettre à jour le total de la semaine dans le titre
                 setTimeout(() => {
-                    alert("ENTROU")
                     const weekTotalElement = document.getElementById(`weekTotal${weekNumber}`);
-                    if (weekTotalElement) {
-                        alert('EXISTE')
+                    alert(weekTotalElement)
+                    //if (weekTotalElement) {
+                        //alert('EXISTE')
                         weekTotalElement.textContent = `${weekTotalHours}h`;
-                    }
+                    //}
                 }, 10);
                 
                 // Passer à la semaine suivante
