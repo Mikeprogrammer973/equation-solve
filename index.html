@@ -645,7 +645,7 @@
                             hoursBadge.textContent = `${hours}h`;
 
                             hoursBadge.addEventListener('click', function () {
-                                alert('●●●')
+                                //alert('●●●')
                                 addTimeSlot(dateStr, personIndex, true);
                             })
                             
@@ -886,8 +886,10 @@
             }
 
             if(freeing) {
-                alert(dateStr, personIndex)
+                //alert(dateStr, personIndex)
                 scheduleData[dateStr][personIndex] = []
+                renderWeeklySchedules();
+                updateTotals();
                 return
             }
             
@@ -898,7 +900,6 @@
                 endAmPm: 'PM'
             };
             
-            // Re-renderiser
             renderWeeklySchedules();
             updateTotals();
         }
